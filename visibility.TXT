@@ -1,0 +1,29 @@
+﻿Проводим анализ результатов работы компилятора.
+
+
+void main()
+{	
+00007FF643EA1840  push        rbp  
+00007FF643EA1842  push        rdi  
+00007FF643EA1843  sub         rsp,0E8h  
+00007FF643EA184A  lea         rbp,[rsp+20h]  
+00007FF643EA184F  mov         rdi,rsp  
+00007FF643EA1852  mov         ecx,3Ah  
+00007FF643EA1857  mov         eax,0CCCCCCCCh  
+00007FF643EA185C  rep stos    dword ptr [rdi]  
+00007FF643EA185E  lea         rcx,[__7532C036_visibility@c (07FF643EB1005h)]  
+00007FF643EA1865  call        __CheckForDebuggerJustMyCode (07FF643EA1082h)  
+	system("chcp 1251");
+00007FF643EA186A  lea         rcx,[string "chcp 1251" (07FF643EA9C28h)]  
+00007FF643EA1871  call        qword ptr [__imp_system (07FF643EB02E8h)]  
+	printf("Димончик Не выводит");
+00007FF643EA1877  lea         rcx,[string "\xc4\xe8\xec\xee\xed\xf7\xe8\xea \xcd\xe5 \xe2\xfb\xe2\xee\xe4\xe8\xf2" (07FF643EA9C38h)]  
+00007FF643EA187E  call        printf (07FF643EA11D1h)  
+	_getch();
+00007FF643EA1883  call        qword ptr [__imp__getch (07FF643EB02F0h)]  
+}
+00007FF643EA1889  xor         eax,eax  
+00007FF643EA188B  lea         rsp,[rbp+0C8h]  
+00007FF643EA1892  pop         rdi  
+00007FF643EA1893  pop         rbp  
+00007FF643EA1894  ret  
