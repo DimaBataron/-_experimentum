@@ -10,7 +10,7 @@ void catalog(char *slovo);
 void mystrcpy(char *slovoD, char *slovoS);
 void FindS(struct stek *TOP, char *slovo1);
 char *FindFile(char *slovo);
-void poiskSlovaVf(FILE *fp, char *slovo, int n, int k);
+int poiskSlovaVf(FILE **fp, char *slovo, int n, int k, char *file);
 struct stek *Rash(char *slovo2, FILE *txt);
 struct stek *dobavMen9(struct stek *TOP);
 
@@ -23,12 +23,21 @@ struct stek
 void main()
 {
 	char *slovo=NULL;
-	char *FailFind;
+	int fl = 1;
 	system("color 0A && chcp 1251"); // установка цвета и кодовой таблицы консоли.
-	slovo = zapis_s_con("\n Ввод пути поиска файлов. Прм: \" P:\\A\\z \" ");
-	catalog(slovo);
-	FailFind = FindFile(slovo);
-	_getch();
+	do
+	{
+		slovo = zapis_s_con("\n Ввод пути поиска файлов. Прм: \" P:\\A\\z \" ");
+		catalog(slovo);
+		do
+		{
+			FindFile(slovo);
+			printf("\nИзменить расширения файлов поиска? 1-да,0-нет\n");
+			scanf_s("%d", &fl);
+		} while (fl == 1);
+		printf("\nПовторить 1-да,0-нет");
+		scanf_s("%d", &fl);
+	} while (fl == 1);
 }
 
 
@@ -67,18 +76,30 @@ void catalog(char *slovo)
 char *FindFile(char *slovo)
 {
 	FILE *txt;
-	int len;
-	char *F = "\\FindC.txt", *slovo1;
+	int len, fl=1,Err;
+	char *F = "\\FindC.txt", *slovo1=NULL;
 	char *slovo2; // расширения файлов в которых будем искать slovoFind
+	struct stek *fls; // вершина стэка имен файлов с заданным расширением
 	len = strlen(F);
 	len += strlen(slovo); 
 	slovo1 = (char *)malloc(len - 1);
+	slovo1[0] = '\0';
 	mystrcpy(slovo1, slovo);
 	mystrcpy(slovo1, F); // slovo1 папка где ищем файлы содержащие слово
 	slovo1[len-1] = '\0';
-	fopen_s(&txt, slovo1, "r"); // в этом файле каталог всех папок;
+	if ((Err=fopen_s(&txt, slovo1, "rt")) != 0) 	// в этом файле каталог всех папок;
+	{
+		puts("открыть не удалось");
+		_getch();
+	}
 	slovo2 = zapis_s_con("\nВвод расширений файлов в которых ищем. Прм. : \" .c \"");
-	return Rash(slovo2, txt);
+	fls= Rash(slovo2, txt);
+	do
+	{
+		FindS(fls, slovo);
+		printf("\nПоиск завершен.Изменить слово поиска? 1-да,0-нет");
+		scanf_s("%d", &fl);
+	} while (fl == 1);
 }
 
 //Поиск слова с таким расширением в файле.
@@ -86,9 +107,9 @@ char *FindFile(char *slovo)
 // возвращает вершину стэка имен файлов с таким расширением
 struct stek *Rash(char *slovo2, FILE *txt)
 {
-	char sl[150], *result;
+	char sl[1000], *result;
 	int len,i=0,j=0;
-	struct stek *TOP = NULL; // вершина стэка
+	struct stek *TOP = NULL; // вершина стека
 	while ((len = fscanf_s(txt, "%s", sl)) != 0)
 	{
 		while (sl[i] != '\0')
@@ -112,6 +133,18 @@ struct stek *Rash(char *slovo2, FILE *txt)
 	return TOP;
 }
 
+//Функция находит слова в текстовом фале, 
+//возвращает указатель на массив символов найденного слова;
+char *s_scanfDima(FILE *fp)
+{
+	int sym;
+	long int karD, karP;
+	while ((sym = fgetc(fp)) != EOF && sym == '\r' && sym == ' ' && sym == '\n')
+	{
+
+	}
+}
+
 //Процедура запрашивает что ищем, проводит поиск по файлам и выводит
 // что найдено.
 void FindS(struct stek *TOP,char *slovo1)
@@ -119,6 +152,7 @@ void FindS(struct stek *TOP,char *slovo1)
 	char *s_find; // слово поиска
 	char *pyt; // путь файла в котором ищем
 	int len;
+	struct stek *DEL= TOP; // указатель на текущую позицию
 	FILE *fp;
 	s_find = zapis_s_con("\n Ввод слова поиска в файлах");
 	while (TOP != NULL)
@@ -126,9 +160,16 @@ void FindS(struct stek *TOP,char *slovo1)
 		len = strlen(slovo1);
 		len += strlen(TOP->slovo);
 		pyt = (char *)malloc(len);
-		mystrcpy(pyt, slovo1);
-		mystrcpy(pyt, TOP->slovo);
-		fopen_s(&fp, pyt, "r");
+		pyt[0] = '\0';
+		mystrcpy(pyt, slovo1); // записываем путь 
+		mystrcpy(pyt, TOP->slovo); // и наименование файла
+		fopen_s(&fp, pyt, "r"); // открываем файл с таким расширением
+		if (poiskSlovaVf(fp, s_find, 40, 100,TOP->slovo)==0); // поиск введенного
+		// слова в этом файле
+		{
+			return 0;
+		}
+		DEL = DEL->NEXT;
 	}
 }
 
@@ -136,12 +177,13 @@ void FindS(struct stek *TOP,char *slovo1)
 //Находит и выводит последовательность букв
 // а также n символов до и k символов после.
 // Принимает на вход слово поиска и файл где ищем.
-void poiskSlovaVf(FILE *fp, char *slovo, int n, int k)
+int poiskSlovaVf(FILE **fp, char *slovo, int n, int k,char *file)
 {
 	char sym;
 	int i = 0,fl=0;
 	long tek; // положение слова в файле.
 	int len;
+	int psym; //позиция последнего символа
 	while ((sym = fgetc(fp)) != EOF)
 	{
 		if (sym==slovo[i])
@@ -150,17 +192,58 @@ void poiskSlovaVf(FILE *fp, char *slovo, int n, int k)
 		}
 		else
 		{
-			if (slovo[i] == '\0') // нашли слово
+			if (slovo[i] == '\0' && fl==1) // нашли слово
 			{
+				printf("\nНайдено в файле %s", file);
 				len = strlen(slovo);
 				tek = ftell(fp);
 				tek = tek - (long)len; // tek положение указателя 
 				// относительно начала файла
-
+				if ((tek - n)>0) // можно вывести столько символов до
+				{
+					fseek(fp, -(long)n, 1);
+					while (ftell(fp) < tek)
+					{
+						putchar(fgetc(fp)); //выводим
+					}
+				}
+				else // нельзя выводим сколько можно
+				{
+					fseek(fp, 0, 1);
+					while (ftell(fp) < tek)
+					{
+						putchar(fgetc(fp));
+					}
+				}
+				fseek(fp, 0, 3);
+				psym =ftell(fp);// получаем позицию последнего символа
+				if ((tek + k) < psym) // если можно вывести k
+				// символов после
+				{
+					fseek(fp, (long)tek, 0);
+					while (ftell(fp)<(tek+k))
+					{
+						putchar(fgetc(fp));
+					}
+				}
+				else // нельзя выводим сколько осталось
+				{
+					fseek(fp, (long)tek, 0);
+					while (ftell(fp) < psym)
+					{
+						putchar(fgetc(fp));
+					}
+				}
+				printf("\n Продолжить? 1-да 0-нет");
+				scanf_s("%d", &fl);
+				if (fl == 0) return 0;
 			}
+
 			else i = 0;
 		}
+		fl = 0;
 	}
+	return 1;
 }
 
 // Функция добавляет структуру на вершину стэка
@@ -240,7 +323,7 @@ char *slov(char *slovo, int n,char sym)
 				*(slovo1 + j) = *(slovo + j);
 				j++;
 			}
-			slovo1[n - 1] = sym; // запись переданного в функцию символа
+			slovo1[n-1] = sym; // запись переданного в функцию символа
 			slovo1[n] = '\0'; // запись признака окончания слова
 			free(slovo);
 			return slovo1;
